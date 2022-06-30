@@ -35,7 +35,7 @@ from .util.NewFileWatcher import NewFileInDirectoryWatcher
 from .util.HelperModule import rotate_matrix_p90, rotate_matrix_m90, FileNameIterator
 from .util.ImgCorrection import ImgCorrectionManager, ImgCorrectionInterface, TransferFunctionCorrection
 from dioptas.model.loader.LambdaLoader import LambdaImage
-from dioptas.model.loader.KaraboLoader import KaraboFile
+from dioptas.model.loader.KaraboLoader import EuXFELFile
 from dioptas.model.loader.hdf5Loader import Hdf5Image
 from dioptas.model.loader.FabioLoader import FabioLoader
 
@@ -265,14 +265,22 @@ class ImgModel(object):
                  None if unsuccessful
         """
         try:
-            karabo_file = KaraboFile(filename)
+            karabo_file = EuXFELFile(filename)
         except IOError:
             return None
         if frame_index >= karabo_file.series_max:
             return None
-        return {"img_data": karabo_file.get_image(frame_index),
-                "series_max": karabo_file.series_max,
-                "series_get_image": karabo_file.get_image}
+
+        self.loader = karabo_file
+        self.selected_source = list(karabo_file.sources)[0]
+
+        return {
+            "img_data": karabo_file.get_image(frame_index),
+            "series_max": karabo_file.series_max,
+            "series_get_image": karabo_file.get_image,
+            "sources": list(karabo_file.sources),
+            "selected_source": karabo_file.select_source,
+        }
 
     def load_hdf5(self, filename, frame_index=0):
         """
